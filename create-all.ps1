@@ -32,8 +32,21 @@ foreach ($sg in $SGS) {
     $name = $sg.Name
     $description = $sg.Description
     $ou = $sg.OU
+    $groups = $sg.Groups
+    $groups = $groups.split(",")
+
 
     New-ADGroup -Name $name -path $ou -Description $description
+
+    # Add the groups to the security group
+    foreach ($group in $groups) {
+
+        $group = $group.trim()
+        $group = "CN=" + $group + "," + $ou
+
+        Add-ADGroupMember -Group $name -Member $group
+
+    }
 
 }
 
@@ -57,7 +70,8 @@ foreach ($user in $USERS) {
     # Add the groups to the user
     foreach ($group in $groups) {
         $group = $group.Name
-        Add-ADUserMember -UserName $name -MemberName $group
+
+        Add-ADGroupMember -Identity $group -Member $name
     }
 }
 
