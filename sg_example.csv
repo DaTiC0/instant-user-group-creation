@@ -1,0 +1,3 @@
+Name,OU,Groups,Description
+test-group,test-ou,"Domain admins,Domain Users",test security group
+test1-group,test-ou,Domain Users,test group

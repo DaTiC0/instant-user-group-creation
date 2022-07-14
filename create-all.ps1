@@ -32,6 +32,7 @@ foreach ($sg in $SGS) {
     $name = $sg.Name
     $description = $sg.Description
     $ou = $sg.OU
+    $ou = "OU=" + $ou + "," + $DC
     $groups = $sg.Groups
     $groups = $groups.split(",")
 
@@ -58,13 +59,14 @@ foreach ($user in $USERS) {
     $name = $user.Name
     $description = $user.Description
     $ou = $user.OU
+    $ou = "OU=" + $ou + "," + $DC
     $password = $user.Password
-    $mail = $user.Mail
-    $enabled = $user.Enabled
+    # $mail = $user.Mail
+    # $enabled = $user.Enabled
     $groups = $user.Groups
     $groups = $groups.split(",")
 
-    New-ADUser -Name $name -path $ou -Description $description -Password $password -Enabled $enabled -mail $mail
+    New-ADUser -Name $name -path $ou -Description $description -Password $password # -Enabled $enabled -mail $mail
 
     # Add the groups to the user
     foreach ($group in $groups) {
