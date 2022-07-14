@@ -1,2 +1,2 @@
-Name,Password,OU,Groups,Mail,Description
-test,asddfg,test-ou,test-group,test@mail.com,testing user
+Name,GivenName,Password,OU,Groups,Mail,Description
+test,test,asddfg,test-ou,test-group,test@mail.com,testing user

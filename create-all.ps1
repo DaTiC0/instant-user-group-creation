@@ -58,6 +58,7 @@ $USERS = Import-csv usr.csv
 foreach ($user in $USERS) {
 
     $name = $user.Name
+    $givenname = $user.GivenName
     $description = $user.Description
     $ou = $user.OU
     $ou = "OU=" + $ou + "," + $DC
@@ -67,7 +68,7 @@ foreach ($user in $USERS) {
     $groups = $user.Groups
     $groups = $groups.split(",")
 
-    New-ADUser -Name $name -path $ou -Description $description -Enabled $true -Accountpassword $password # -Enabled $enabled -mail $mail
+    New-ADUser -Name $name -GivenName $givenname $-path $ou -Description $description -Enabled $true -Accountpassword $password # -Enabled $enabled -mail $mail
     Write-Host "User $name created"
 
     # Add the groups to the user
