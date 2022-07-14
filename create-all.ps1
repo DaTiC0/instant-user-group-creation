@@ -4,7 +4,7 @@ Import-Module activedirectory
 $ROOT = Get-ADDomain | Select-Object DistinguishedName
 
 # Main OU
-$OU = "TEST"
+$OU = Read-Host "Enter Main OU"
 
 # Create OU
 New-ADOrganizationalUnit -Name $OU -Path $ROOT.DistinguishedName
