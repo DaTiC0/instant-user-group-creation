@@ -41,10 +41,9 @@ foreach ($sg in $SGS) {
     # Add the groups to the security group
     foreach ($group in $groups) {
 
-        $group = $group.trim()
-        $group = "CN=" + $group + "," + $ou
+        $group = $group.Name
 
-        Add-ADGroupMember -Group $name -Member $group
+        Add-ADGroupMember -Identity $group -Member $name
 
     }
 
