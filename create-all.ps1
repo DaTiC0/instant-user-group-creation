@@ -61,13 +61,13 @@ foreach ($user in $USERS) {
     $description = $user.Description
     $ou = $user.OU
     $ou = "OU=" + $ou + "," + $DC
-    $password = $user.Password
+    $password = convertto-securestring $user.Password -asplaintext -force
     # $mail = $user.Mail
     # $enabled = $user.Enabled
     $groups = $user.Groups
     $groups = $groups.split(",")
 
-    New-ADUser -Name $name -path $ou -Description $description -Enabled $true # -Password $password -Enabled $enabled -mail $mail
+    New-ADUser -Name $name -path $ou -Description $description -Enabled $true -Accountpassword $password # -Enabled $enabled -mail $mail
     Write-Host "User $name created"
 
     # Add the groups to the user
