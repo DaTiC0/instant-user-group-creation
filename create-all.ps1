@@ -8,7 +8,7 @@ $OU = "TEST"
 
 # Create OU
 New-ADOrganizationalUnit -Name $OU -Path $ROOT.DistinguishedName
-
+Write-Host "OU $OU created"
 # Create path for OUs
 $DC = "OU=" + $OU + "," + $ROOT.DistinguishedName
 
@@ -22,6 +22,7 @@ foreach ($ou in $OUS) {
     $description = $ou.Description
 
     New-ADOrganizationalUnit -Name $name -path $DC -Description $description
+    Write-Host "OU $name created"
 
 }
 
@@ -37,7 +38,8 @@ foreach ($sg in $SGS) {
     $groups = $groups.split(",")
 
 
-    New-ADGroup -Name $name -path $ou -Description $description
+    New-ADGroup -Name $name -path $ou -Description $description -GroupScope Global
+    Write-Host "SG $name created"
 
     # Add the groups to the security group
     foreach ($group in $groups) {
@@ -45,6 +47,7 @@ foreach ($sg in $SGS) {
         $group = $group.Name
 
         Add-ADGroupMember -Identity $group -Member $name
+        Write-Host "Group $group added to SG $name"
 
     }
 
@@ -67,12 +70,16 @@ foreach ($user in $USERS) {
     $groups = $groups.split(",")
 
     New-ADUser -Name $name -path $ou -Description $description -Password $password # -Enabled $enabled -mail $mail
+    Write-Host "User $name created"
 
     # Add the groups to the user
     foreach ($group in $groups) {
         $group = $group.Name
 
         Add-ADGroupMember -Identity $group -Member $name
+        Write-Host "Group $group added to User $name"
+
+
     }
 }
 
