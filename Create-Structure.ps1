@@ -96,7 +96,7 @@ Function CreateSG {
     # if SG not exist
     else {
         Write-Host "Creating SG $Name"
-        New-ADGroup -Name $Name -Path $Path -Description $Description -GroupScope Global
+        New-ADGroup -Name $Name -Path $Path -GroupScope Global -Description $Description
     }
 }
 
@@ -153,23 +153,23 @@ foreach ($Location in $Locations) {
 }
 
 ## Create Department OUs
-foreach ($Department in $CSV) {
+foreach ($D in $CSV) {
 
-    $Name = $Department.Department
-    $Description = $Department.Department_Description
+    $Name = $D.Department
+    $Description = $D.Department_Description
     $SubOU = $SubOUs.Item(1)
-    $OU = "OU=$($Department.Location),OU=$SubOU,OU=$MainOU,$DomainOU"
+    $OU = "OU=$($D.Location),OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateOU
     CreateOU -Name $Name -Path $OU -Description $Description
 }
 
 # Create Security Groups By Department
-foreach ($Department in $CSV) {
+foreach ($D in $CSV) {
 
-    $Location = $Department.Location
-    $Department = $Department.Department
+    $Location = $D.Location
+    $Department = $D.Department
     $Name = $Location + "_" + $Department
-    $Description = $Department.Department_Description
+    $Description = $D.Department_Description
     $SubOU = $SubOUs.Item(0)
     $SubGroupOU = $SubGroupOUs.Item(1)
     $OU = "OU=$SubGroupOU,OU=$SubOU,OU=$MainOU,$DomainOU"
@@ -179,19 +179,29 @@ foreach ($Department in $CSV) {
 
 # Create Security Groups By Title In Department OUs
 # And add Security Group to Department Security Group
-foreach ($Title in $CSV) {
+foreach ($T in $CSV) {
     
-    $Location = $Title.Location
-    $Department = $Title.Department
-    $Name = $Title.Title
+    $Location = $T.Location
+    $Department = $T.Department
+    $Name = $T.Title
     $Name = $Location + "_" + $Department + "_" + $Name
-    $Description = $Title.Title_Description
+    $Description = $T.Title_Description
+
     $SubOU = $SubOUs.Item(0)
     $SubGroupOU = $SubGroupOUs.Item(2)
     $OU = "OU=$SubGroupOU,OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateSG
     CreateSG -Name $Name -Path $OU -Description $Description
     # Add Security Group to Department Security Group
+    # limit name to 64 characters
+    if ($Name.Length -gt 64) {
+        $Name = $Name.Substring(0, 64)
+    }
+    $DepartmentSG = $Location + "_" + $Department
+    if ($DepartmentSG.Length -gt 64) {
+        $DepartmentSG = $DepartmentSG.Substring(0, 64)
+    }
+    Add-ADGroupMember -Identity $DepartmentSG -Members $Name
 
 }
 
