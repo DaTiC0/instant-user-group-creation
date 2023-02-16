@@ -40,6 +40,37 @@ Write-Host "Domain Name: $DomainName" -ForegroundColor Blue
 Write-Host "Domain Extension: $DomainExtension" -ForegroundColor Magenta
 Write-Host "Main OU: $MainOU" -ForegroundColor Yellow
 
+# Function To create Organizational Units with Description
+Function CreateOU {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter]
+        [string]$Description
+    )
+    # Check if OU already exist
+    $OUExist = Get-ADOrganizationalUnit -Filter { Name -eq $Name } -SearchBase $Path -ErrorAction SilentlyContinue
+    # if OU already exist
+    if ($OUExist) {
+        Write-Host "OU $Name already exist" -ForegroundColor Yellow
+        # if Description exist
+        if ($Description) {
+            Write-Host "Updating OU $Name Description" -ForegroundColor Green
+            Set-ADOrganizationalUnit -Identity "OU=$Name,$Path" -Description $Description
+        }
+    }
+    # if OU not exist
+    else {
+        Write-Host "Creating OU $Name"
+        New-ADOrganizationalUnit -Name $Name -Path $Path -Description $Description
+    }
+}
+
+# Function To create Security Groups with Description
+
+
 ## Create Main OU
 # Check if OU already exist
 $MainOUExist = Get-ADOrganizationalUnit -Filter { Name -eq $MainOU } -SearchBase $DomainOU -ErrorAction SilentlyContinue
@@ -58,16 +89,9 @@ $SubOUs = "Groups", "Users", "Computers"
 foreach ($SubOU in $SubOUs) {
     # Check if OU already exist
     $Name = $SubOU
-    $LocationOUExist = Get-ADOrganizationalUnit -Filter { Name -eq $Name } -SearchBase "OU=$MainOU,$DomainOU" -ErrorAction SilentlyContinue
-    # if OU already exist
-    if ($LocationOUExist) {
-        Write-Host "OU $Name already exist" -ForegroundColor Yellow
-    }
-    # if OU not exist
-    else {
-        Write-Host "Creating OU $Name"
-        New-ADOrganizationalUnit -Name $Name -Path "OU=$MainOU,$DomainOU" 
-    }
+    $OU = "OU=$MainOU,$DomainOU"
+    # Run Function CreateOU
+    CreateOU -Name $Name -Path $OU
 }
 
 ## Create Location OUs
@@ -77,16 +101,8 @@ foreach ($Location in $Locations) {
     # Check if OU already exist
     $Name = $Location.Location   
     $OU = "OU=$SubOU,OU=$MainOU,$DomainOU"
-    $LocationOUExist = Get-ADOrganizationalUnit -Filter { Name -eq $Name } -SearchBase $OU -ErrorAction SilentlyContinue
-    # if OU already exist
-    if ($LocationOUExist) {
-        Write-Host "OU $Name already exist" -ForegroundColor Yellow
-    }
-    # if OU not exist
-    else {
-        Write-Host "Creating OU $Name"
-        New-ADOrganizationalUnit -Name $Location.Location -Path $OU
-    }
+    # Run Function CreateOU
+    CreateOU -Name $Name -Path $OU
 }
 
 ## Create Department OUs
@@ -96,16 +112,8 @@ foreach ($Department in $CSV) {
     $Name = $Department.Department
     $Description = $Department.Department_Description
     $OU = "OU=$($Department.Location),OU=$SubOU,OU=$MainOU,$DomainOU"
-    $DepartmentOUExist = Get-ADOrganizationalUnit -Filter { Name -eq $Name } -SearchBase $OU -ErrorAction SilentlyContinue
-    # if OU already exist
-    if ($DepartmentOUExist) {
-        Write-Host "OU $Name already exist in $($Department.Location)" -ForegroundColor Yellow
-    }
-    # if OU not exist
-    else {
-        Write-Host "Creating OU $Name in $($Department.Location)"
-        New-ADOrganizationalUnit -Name $Name -Path $OU -Description $Description
-    }
+    # Run Function CreateOU
+    CreateOU -Name $Name -Path $OU -Description $Description
 }
 
 # Create Security Groups By Department
@@ -154,9 +162,7 @@ foreach ($Title in $CSV) {
     # if Security Group not exist
     else {
         Write-Host "Creating Security Group $Name in $Department"
-        New-ADGroup -Name $Name -GroupScope Global -Path $OU
-        # Add Description
-        Set-ADGroup -Identity "CN=$Name,$OU" -Description $Description
+        New-ADGroup -Name $Name -GroupScope Global -Path $OU -Description $Description
         # # Add Security Group to Department Security Group
         # Add-ADGroupMember -Identity "OU=$Department,OU=$Location,OU=$MainOU,$DomainOU" -Members "OU=$Name,OU=$Department,OU=$Location,OU=$MainOU,$DomainOU"
     }
