@@ -137,10 +137,16 @@ foreach ($SubGroupOU in $SubGroupOUs) {
 
 ## Create Location OUs
 $Locations = $CSV | Sort-Object Location -Unique
-$SubOU = $SubOUs.Item(1)
+
 foreach ($Location in $Locations) {
 
-    $Name = $Location.Location   
+    $Name = $Location.Location
+    $SubOU = $SubOUs.Item(1)
+    $OU = "OU=$SubOU,OU=$MainOU,$DomainOU"
+    # Run Function CreateOU
+    CreateOU -Name $Name -Path $OU
+    #### needs refactor         
+    $SubOU = $SubOUs.Item(2)
     $OU = "OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateOU
     CreateOU -Name $Name -Path $OU
@@ -151,6 +157,7 @@ foreach ($Department in $CSV) {
 
     $Name = $Department.Department
     $Description = $Department.Department_Description
+    $SubOU = $SubOUs.Item(1)
     $OU = "OU=$($Department.Location),OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateOU
     CreateOU -Name $Name -Path $OU -Description $Description
