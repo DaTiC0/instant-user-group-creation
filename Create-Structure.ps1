@@ -47,7 +47,6 @@ Function CreateOU {
         [string]$Name,
         [Parameter(Mandatory = $true)]
         [string]$Path,
-        [Parameter]
         [string]$Description
     )
     # Check if OU already exist
@@ -69,6 +68,37 @@ Function CreateOU {
 }
 
 # Function To create Security Groups with Description
+Function CreateSG {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [string]$Description
+    )
+    ## it does not check if in name there is a special character
+    ## needs to be added later
+    # limit name to 64 characters
+    if ($Name.Length -gt 64) {
+        $Name = $Name.Substring(0, 64)
+    }
+    # Check if SG already exist
+    $SGExist = Get-ADGroup -Filter { Name -eq $Name } -SearchBase $Path -ErrorAction SilentlyContinue
+    # if SG already exist
+    if ($SGExist) {
+        Write-Host "SG $Name already exist" -ForegroundColor Yellow
+        # if Description exist
+        if ($Description) {
+            Write-Host "Updating SG $Name Description" -ForegroundColor Green
+            Set-ADGroup -Identity "CN=$Name,$Path" -Description $Description
+        }
+    }
+    # if SG not exist
+    else {
+        Write-Host "Creating SG $Name"
+        New-ADGroup -Name $Name -Path $Path -Description $Description -GroupScope Global
+    }
+}
 
 
 ## Create Main OU
@@ -84,10 +114,10 @@ else {
     New-ADOrganizationalUnit -Name $MainOU -Path $DomainOU
 }
 
-## Create Location OUs
+## Create Static OUs
 $SubOUs = "Groups", "Users", "Computers"
 foreach ($SubOU in $SubOUs) {
-    # Check if OU already exist
+    
     $Name = $SubOU
     $OU = "OU=$MainOU,$DomainOU"
     # Run Function CreateOU
@@ -98,7 +128,7 @@ foreach ($SubOU in $SubOUs) {
 $Locations = $CSV | Sort-Object Location -Unique
 $SubOU = $SubOUs.Item(0)
 foreach ($Location in $Locations) {
-    # Check if OU already exist
+
     $Name = $Location.Location   
     $OU = "OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateOU
@@ -106,9 +136,8 @@ foreach ($Location in $Locations) {
 }
 
 ## Create Department OUs
-
 foreach ($Department in $CSV) {
-    # Check if OU already exist
+
     $Name = $Department.Department
     $Description = $Department.Department_Description
     $OU = "OU=$($Department.Location),OU=$SubOU,OU=$MainOU,$DomainOU"
@@ -117,25 +146,15 @@ foreach ($Department in $CSV) {
 }
 
 # Create Security Groups By Department
-# Check if Security Group already exist and create if not exist from imported csv file In Location OUs
-
 foreach ($Department in $CSV) {
-    # Check if Security Group already exist
+
     $Location = $Department.Location
     $Department = $Department.Department
     $Name = $Location + "_" + $Department
     $Description = $Department.Department_Description
     $OU = "OU=$Department,OU=$Location,OU=$SubOU,OU=$MainOU,$DomainOU"
-    $SecurityGroupExist = Get-ADGroup -Filter { Name -eq $Name } -SearchBase $OU -ErrorAction SilentlyContinue
-    # if Security Group already exist
-    if ($SecurityGroupExist) {
-        Write-Host "Security Group $Name already exist in $Location" -ForegroundColor Yellow
-    }
-    # if Security Group not exist
-    else {
-        Write-Host "Creating Security Group $Name in $Location"
-        New-ADGroup -Name $Name -GroupScope Global -Path $OU -Description $Description
-    }
+    # Run Function CreateSG
+    CreateSG -Name $Name -Path $OU -Description $Description
 }
 
 # Create Security Groups By Title In Department OUs
@@ -146,26 +165,13 @@ foreach ($Title in $CSV) {
     $Department = $Title.Department
     $Name = $Title.Title
     $Name = $Location + "_" + $Department + "_" + $Name
-    # $Description = $Title.Description
     $Description = $Title.Title_Description
     $OU = "OU=$Department,OU=$Location,OU=$SubOU,OU=$MainOU,$DomainOU"
-    # Check if Security Group already exist
-    $SecurityGroupExist = Get-ADGroup -Filter { Name -eq $Name } -SearchBase $OU -ErrorAction SilentlyContinue
-    # if Security Group already exist
-    if ($SecurityGroupExist) {
-        Write-Host "Security Group $Name already exist in $Department" -ForegroundColor Yellow
-        # Update Description
-        Set-ADGroup -Identity "CN=$Name,$OU" -Description $Description
-        # # Add Security Group to Department Security Group
-        # Add-ADGroupMember -Identity "OU=$Department,OU=$Location,OU=$MainOU,$DomainOU" -Members "OU=$Name,OU=$Department,OU=$Location,OU=$MainOU,$DomainOU"
-    }
-    # if Security Group not exist
-    else {
-        Write-Host "Creating Security Group $Name in $Department"
-        New-ADGroup -Name $Name -GroupScope Global -Path $OU -Description $Description
-        # # Add Security Group to Department Security Group
-        # Add-ADGroupMember -Identity "OU=$Department,OU=$Location,OU=$MainOU,$DomainOU" -Members "OU=$Name,OU=$Department,OU=$Location,OU=$MainOU,$DomainOU"
-    }
+    # Run Function CreateSG
+    CreateSG -Name $Name -Path $OU -Description $Description
+    # Add Security Group to Department Security Group
+
 }
+
 # Add Users to Security Groups
 
