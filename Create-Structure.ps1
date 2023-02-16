@@ -124,9 +124,20 @@ foreach ($SubOU in $SubOUs) {
     CreateOU -Name $Name -Path $OU
 }
 
+## Create Static Group OUs in Groups OU
+$SubGroupOUs = "Locations", "Departments", "Titles", "Share Folder Groups"
+foreach ($SubGroupOU in $SubGroupOUs) {
+    
+    $Name = $SubGroupOU
+    $SubOU = $SubOUs.Item(0)
+    $OU = "OU=$SubOU,OU=$MainOU,$DomainOU"
+    # Run Function CreateOU
+    CreateOU -Name $Name -Path $OU
+}
+
 ## Create Location OUs
 $Locations = $CSV | Sort-Object Location -Unique
-$SubOU = $SubOUs.Item(0)
+$SubOU = $SubOUs.Item(1)
 foreach ($Location in $Locations) {
 
     $Name = $Location.Location   
@@ -152,7 +163,9 @@ foreach ($Department in $CSV) {
     $Department = $Department.Department
     $Name = $Location + "_" + $Department
     $Description = $Department.Department_Description
-    $OU = "OU=$Department,OU=$Location,OU=$SubOU,OU=$MainOU,$DomainOU"
+    $SubOU = $SubOUs.Item(0)
+    $SubGroupOU = $SubGroupOUs.Item(1)
+    $OU = "OU=$SubGroupOU,OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateSG
     CreateSG -Name $Name -Path $OU -Description $Description
 }
@@ -166,7 +179,9 @@ foreach ($Title in $CSV) {
     $Name = $Title.Title
     $Name = $Location + "_" + $Department + "_" + $Name
     $Description = $Title.Title_Description
-    $OU = "OU=$Department,OU=$Location,OU=$SubOU,OU=$MainOU,$DomainOU"
+    $SubOU = $SubOUs.Item(0)
+    $SubGroupOU = $SubGroupOUs.Item(2)
+    $OU = "OU=$SubGroupOU,OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateSG
     CreateSG -Name $Name -Path $OU -Description $Description
     # Add Security Group to Department Security Group
