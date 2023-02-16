@@ -204,6 +204,38 @@ foreach ($T in $CSV) {
     Add-ADGroupMember -Identity $DepartmentSG -Members $Name
 
 }
-
+$Log = 'error.log'
 # Add Users to Security Groups
+foreach ($U in $CSV) {
 
+    $Location = $U.Location
+    $Department = $U.Department
+    $Title = $U.Title
+    $Name = $U.Employee
+    $Description = $U.Title_Description
+
+    $TitleSG = $Location + "_" + $Department + "_" + $Title
+
+    if ($TitleSG.Length -gt 64) {
+        $TitleSG = $TitleSG.Substring(0, 64)
+    }
+    Write-host "Searching for $Name"
+    $User = Get-ADUser -Filter "Name -eq '$Name'" -SearchBase $DomainOU -ErrorAction SilentlyContinue
+    if ($User) {
+        if ($Description) {
+            Write-Host "Updating $Name Description"
+            Set-ADUser -Identity $User -Description $Description
+        }
+        $User = $User.SamAccountName
+        Write-Host "Adding $Name to $TitleSG"
+        Add-ADGroupMember -Identity $TitleSG -Members $User
+
+    }
+    else {
+        Write-Host "User $Name not found" -ForegroundColor Red
+        # Save to log file
+        Add-Content -Path $Log -Value $Name
+        continue
+    }
+
+}
