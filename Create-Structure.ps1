@@ -213,6 +213,7 @@ foreach ($U in $CSV) {
     $Title = $U.Title
     $Name = $U.Employee
     $Description = $U.Title_Description
+    $Mobile = $U.Mobile
 
     $TitleSG = $Location + "_" + $Department + "_" + $Title
 
@@ -220,15 +221,20 @@ foreach ($U in $CSV) {
         $TitleSG = $TitleSG.Substring(0, 64)
     }
     Write-host "Searching for $Name"
-    $User = Get-ADUser -Filter "Name -eq '$Name'" -SearchBase $DomainOU -ErrorAction SilentlyContinue
+    $User = Get-ADUser -Filter "DisplayName -eq '$Name'" -SearchBase $DomainOU -ErrorAction SilentlyContinue
     if ($User) {
         if ($Description) {
             Write-Host "Updating $Name Description"
             Set-ADUser -Identity $User -Description $Description
         }
-        $User = $User.SamAccountName
+        # $User = $User.SamAccountName
         Write-Host "Adding $Name to $TitleSG"
         Add-ADGroupMember -Identity $TitleSG -Members $User
+
+        if ($Mobile) {
+            Write-Host "Updating $Name Mobile"
+            Set-ADUser -Identity $User -Mobile $Mobile
+        }
 
     }
     else {
