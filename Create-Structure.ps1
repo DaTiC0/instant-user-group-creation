@@ -163,6 +163,18 @@ foreach ($D in $CSV) {
     CreateOU -Name $Name -Path $OU -Description $Description
 }
 
+# Create Security Groups By Location
+foreach ($L in $Locations) {
+
+    $Name = $L.Location
+    $Description = $L.Location_Description
+    $SubOU = $SubOUs.Item(0)
+    $SubGroupOU = $SubGroupOUs.Item(0)
+    $OU = "OU=$SubGroupOU,OU=$SubOU,OU=$MainOU,$DomainOU"
+    # Run Function CreateSG
+    CreateSG -Name $Name -Path $OU -Description $Description
+}
+
 # Create Security Groups By Department
 foreach ($D in $CSV) {
 
@@ -175,6 +187,16 @@ foreach ($D in $CSV) {
     $OU = "OU=$SubGroupOU,OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateSG
     CreateSG -Name $Name -Path $OU -Description $Description
+    # Add Security Group to Location Security Group
+    # limit name to 64 characters
+    if ($Name.Length -gt 64) {
+        $Name = $Name.Substring(0, 64)
+    }
+    $LocationSG = $Location
+    if ($LocationSG.Length -gt 64) {
+        $LocationSG = $LocationSG.Substring(0, 64)
+    }
+    Add-ADGroupMember -Identity $LocationSG -Members $Name
 }
 
 # Create Security Groups By Title In Department OUs
@@ -201,10 +223,14 @@ foreach ($T in $CSV) {
     if ($DepartmentSG.Length -gt 64) {
         $DepartmentSG = $DepartmentSG.Substring(0, 64)
     }
+    Write-Host "Adding $Name to $LocationSG Group" -BackgroundColor Black -ForegroundColor Green
     Add-ADGroupMember -Identity $DepartmentSG -Members $Name
 
 }
+
 $Log = 'error.log'
+# Add header to log file
+Set-Content -Path $Log -Value "Error Log" -Force
 # Add Users to Security Groups
 foreach ($U in $CSV) {
 
@@ -224,7 +250,7 @@ foreach ($U in $CSV) {
     $User = Get-ADUser -Filter "DisplayName -eq '$Name'" -SearchBase $DomainOU -ErrorAction SilentlyContinue
     if ($User) {
         if ($Description) {
-            Write-Host "Updating $Name Description"
+            Write-Host "Updating $Name Description" -ForegroundColor Cyan
             Set-ADUser -Identity $User -Description $Description
         }
         # $User = $User.SamAccountName
