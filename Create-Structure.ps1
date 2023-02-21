@@ -83,8 +83,9 @@ Function CreateSG {
         $Name = $Name.Substring(0, 64)
         $Name = $Name.TrimEnd()
     }
-    # Check if SG already exist
+    # Check if SG already exist in this location
     $SGExist = Get-ADGroup -Filter { Name -eq $Name } -SearchBase $Path -ErrorAction SilentlyContinue
+    # Need To Add Check if SG exist in another location
     # if SG already exist
     if ($SGExist) {
         Write-Host "SG $Name already exist" -ForegroundColor Yellow
