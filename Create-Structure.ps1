@@ -81,6 +81,7 @@ Function CreateSG {
     # limit name to 64 characters
     if ($Name.Length -gt 64) {
         $Name = $Name.Substring(0, 64)
+        $Name = $Name.TrimEnd()
     }
     # Check if SG already exist
     $SGExist = Get-ADGroup -Filter { Name -eq $Name } -SearchBase $Path -ErrorAction SilentlyContinue
@@ -191,10 +192,12 @@ foreach ($D in $CSV) {
     # limit name to 64 characters
     if ($Name.Length -gt 64) {
         $Name = $Name.Substring(0, 64)
+        $Name = $Name.TrimEnd()
     }
     $LocationSG = $Location
     if ($LocationSG.Length -gt 64) {
         $LocationSG = $LocationSG.Substring(0, 64)
+        $LocationSG = $LocationSG.TrimEnd()
     }
     Add-ADGroupMember -Identity $LocationSG -Members $Name
 }
@@ -215,13 +218,15 @@ foreach ($T in $CSV) {
     # Run Function CreateSG
     CreateSG -Name $Name -Path $OU -Description $Description
     # Add Security Group to Department Security Group
-    # limit name to 64 characters
+    # limit name to 64 characters and if there is a space in the end of the string remove it
     if ($Name.Length -gt 64) {
         $Name = $Name.Substring(0, 64)
+        $Name = $Name.TrimEnd()
     }
     $DepartmentSG = $Location + "_" + $Department
     if ($DepartmentSG.Length -gt 64) {
         $DepartmentSG = $DepartmentSG.Substring(0, 64)
+        $DepartmentSG = $DepartmentSG.TrimEnd()
     }
     Write-Host "Adding $Name to $LocationSG Group" -BackgroundColor Black -ForegroundColor Green
     Add-ADGroupMember -Identity $DepartmentSG -Members $Name
@@ -245,6 +250,7 @@ foreach ($U in $CSV) {
 
     if ($TitleSG.Length -gt 64) {
         $TitleSG = $TitleSG.Substring(0, 64)
+        $TitleSG = $TitleSG.TrimEnd()
     }
     Write-host "Searching for $Name"
     $User = Get-ADUser -Filter "DisplayName -eq '$Name'" -SearchBase $DomainOU -ErrorAction SilentlyContinue
