@@ -163,6 +163,11 @@ foreach ($D in $CSV) {
     $OU = "OU=$($D.Location),OU=$SubOU,OU=$MainOU,$DomainOU"
     # Run Function CreateOU
     CreateOU -Name $Name -Path $OU -Description $Description
+    # Create Department OUs in Computers OU
+    $SubOU = $SubOUs.Item(2)
+    $OU = "OU=$($D.Location),OU=$SubOU,OU=$MainOU,$DomainOU"
+    # Run Function CreateOU
+    CreateOU -Name $Name -Path $OU -Description $Description
 }
 
 # Create Security Groups By Location
