@@ -273,6 +273,19 @@ foreach ($U in $CSV) {
             Write-Host "Updating $Name Mobile"
             Set-ADUser -Identity $User -Mobile $Mobile
         }
+        if ($Title) {
+            Write-Host "Updating $Name Title"
+            Set-ADUser -Identity $User -Title $Title
+        }
+        if ($Department) {
+            Write-Host "Updating $Name Department"
+            Set-ADUser -Identity $User -Department $Department
+        }
+        if ($Location) {
+            Write-Host "Updating $Name Office"
+            Set-ADUser -Identity $User -Office $Location
+        }
+
 
     }
     else {
