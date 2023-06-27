@@ -18,7 +18,7 @@ foreach ($U in $CSV) {
     $FirstName = $Name.Split(" ")[0]
     $LastName = $Name.Split(" ")[1]
 
-    $username = $Name.Split(" ")[0].Substring(0, 1) + "." + $Name.Split(" ")[1]
+    $username = $FirstName.Substring(0, 1) + "." + $LastName
     # convert to lowercase
     $username = $username.ToLower()
     $Email = $U.Email
@@ -36,7 +36,7 @@ foreach ($U in $CSV) {
     } else {
         Write-Host "Creating user $username"
          # Password is Password1234! you can change it
-        New-ADUser -Name $Name -SamAccountName $username -Path $DomainOU -AccountPassword (ConvertTo-SecureString -AsPlainText "Password1234!" -Force) -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $true -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $Name.Split(" ")[0] -Surname $Name.Split(" ")[1]
+        New-ADUser -Name $Name -SamAccountName $username -Path $DomainOU -AccountPassword (ConvertTo-SecureString -AsPlainText "Password1234!" -Force) -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $true -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName
 
     }
     
