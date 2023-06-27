@@ -31,9 +31,15 @@ foreach ($U in $CSV) {
     Write-host "Username: $username"
     Write-Host $DomainOU
     # Checking if user exists and if not then create
+    if (Get-ADUser -Filter {SamAccountName -eq $username}) {
+        Write-Host "User $username already exists in AD"
+    } else {
+        Write-Host "Creating user $username"
+         # Password is Password1234! you can change it
+        New-ADUser -Name $Name -SamAccountName $username -Path $DomainOU -AccountPassword (ConvertTo-SecureString -AsPlainText "Password1234!" -Force) -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $true -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $Name.Split(" ")[0] -Surname $Name.Split(" ")[1]
+
+    }
     
-    # Password is Password1234! you can change it
-    New-ADUser -Name $Name -SamAccountName $username -Path $DomainOU -AccountPassword (ConvertTo-SecureString -AsPlainText "Password1234!" -Force) -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $true -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $Name.Split(" ")[0] -Surname $Name.Split(" ")[1]
-        
+           
 
 }
