@@ -251,6 +251,7 @@ foreach ($U in $CSV) {
     $Name = $U.Employee
     $Description = $U.Title_Description
     $Mobile = $U.Mobile
+    $Mail = $U.Mail
 
     $TitleSG = $Location + "_" + $Department + "_" + $Title
 
@@ -285,7 +286,10 @@ foreach ($U in $CSV) {
             Write-Host "Updating $Name Office"
             Set-ADUser -Identity $User -Office $Location
         }
-
+        if ($Mail) {
+            Write-Host "Updating $Name Mail"
+            Set-ADUser -Identity $User -EmailAddress $Mail
+        }
 
     }
     else {
