@@ -55,7 +55,7 @@ foreach ($U in $CSV) {
         Write-Host "Creating user $username"
          # Password is Password1234! you can change it
         # New-ADUser -Name $Name -SamAccountName $username -Path $DomainOU -AccountPassword (ConvertTo-SecureString -AsPlainText "Password1234!" -Force) -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $true -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName
-        New-ADUser -Name $Name -SamAccountName $username -UserPrincipalName -Path $DomainOU -AccountPassword $Password -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $false -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName -Company $Company
+        New-ADUser -Name $Name -SamAccountName $username -UserPrincipalName $UserPrincipal -Path $DomainOU -AccountPassword $Password -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $false -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName -Company $Company
     }
     
     # export created usernames to csv file
