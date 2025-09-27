@@ -1,6 +1,11 @@
 # create users from csv file in AD
+# Enhanced with secure password handling
 # Defien CSV file path
-$CSVPath = "source.csv"
+param(
+    [string]$CSVPath = "source.csv",
+    [switch]$PromptForPasswords = $false
+)
+
 # Import CSV file
 $CSV = Import-Csv -Path $CSVPath
 
@@ -35,7 +40,27 @@ foreach ($U in $CSV) {
 
     # convert to lowercase
     $username = $username.ToLower()
-    $Password = ConvertTo-SecureString -AsPlainText $U.Password -Force
+    
+    # Secure password handling
+    if ($PromptForPasswords) {
+        # Most secure option: prompt for each password
+        Write-Host "Enter password for user: $username" -ForegroundColor Yellow
+        $Password = Read-Host -AsSecureString -Prompt "Password"
+    } else {
+        # Generate a secure random password and require password change on first login
+        Write-Host "Generating secure password for $username" -ForegroundColor Yellow
+        # Generate a secure random password using cryptographically secure methods
+        $randomBytes = New-Object byte[] 16
+        $rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::new()
+        $rng.GetBytes($randomBytes)
+        $randomPassword = [Convert]::ToBase64String($randomBytes) + "!"
+        $Password = ConvertTo-SecureString $randomPassword -AsPlainText -Force
+        Write-Host "Generated password for $username : $randomPassword" -ForegroundColor Green
+        Write-Host "User will be required to change password on first login" -ForegroundColor Yellow
+        $rng.Dispose()
+    }
+    
+    # Note: CSV files should not contain Password columns for security reasons
     $UserPrincipal = $username + "@" + $domain
     $Email = $U.Email
     $Description = $U.Title_Description
@@ -53,9 +78,10 @@ foreach ($U in $CSV) {
         Set-ADUser -Identity $username -UserPrincipalName $UserPrincipal
     } else {
         Write-Host "Creating user $username"
-         # Password is Password1234! you can change it
-        # New-ADUser -Name $Name -SamAccountName $username -Path $DomainOU -AccountPassword (ConvertTo-SecureString -AsPlainText "Password1234!" -Force) -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $true -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName
-        New-ADUser -Name $Name -SamAccountName $username -UserPrincipalName $UserPrincipal -Path $DomainOU -AccountPassword $Password -Enabled $true -ChangePasswordAtLogon $false -PasswordNeverExpires $false -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName -Company $Company
+         # Use secure default password instead of hardcoded plaintext
+        # $secureDefaultPassword = ConvertTo-SecureString -AsPlainText "Password1234!" -Force
+        # New-ADUser -Name $Name -SamAccountName $username -Path $DomainOU -AccountPassword $secureDefaultPassword -Enabled $true -ChangePasswordAtLogon $true -PasswordNeverExpires $false -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName
+        New-ADUser -Name $Name -SamAccountName $username -UserPrincipalName $UserPrincipal -Path $DomainOU -AccountPassword $Password -Enabled $true -ChangePasswordAtLogon $true -PasswordNeverExpires $false -EmailAddress $Email -DisplayName $Name -Description $Description -Office $Location -Department $Department -Title $Title -Mobile $Mobile -GivenName $FirstName -Surname $LastName -Company $Company
     }
     
     # export created usernames to csv file

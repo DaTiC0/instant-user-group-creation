@@ -1,4 +1,9 @@
 # Import Active Directory
+# Enhanced with secure password handling
+param(
+    [switch]$PromptForPasswords = $true
+)
+
 Import-Module activedirectory
 
 $ROOT = Get-ADDomain | Select-Object DistinguishedName
@@ -62,13 +67,31 @@ foreach ($user in $USERS) {
     $description = $user.Description
     $ou = $user.OU
     $ou = "OU=" + $ou + "," + $DC
-    $password = convertto-securestring $user.Password -asplaintext -force
+    # Secure password handling
+    if ($PromptForPasswords) {
+        # Most secure option: prompt for each password
+        Write-Host "Enter password for user: $name" -ForegroundColor Yellow
+        $password = Read-Host -AsSecureString -Prompt "Password"
+    } else {
+        # Generate a secure random password and require password change on first login
+        Write-Host "Generating secure password for $name" -ForegroundColor Yellow
+        # Generate a secure random password using cryptographically secure methods
+        $randomBytes = New-Object byte[] 16
+        $rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::new()
+        $rng.GetBytes($randomBytes)
+        $randomPassword = [Convert]::ToBase64String($randomBytes) + "!"
+        $password = ConvertTo-SecureString $randomPassword -AsPlainText -Force
+        Write-Host "Generated password for $name : $randomPassword" -ForegroundColor Green
+        Write-Host "User will be required to change password on first login" -ForegroundColor Yellow
+        $rng.Dispose()
+    }
     # $mail = $user.Mail
     # $enabled = $user.Enabled
     $groups = $user.Groups
     $groups = $groups.split(",")
 
-    New-ADUser -Name $name -GivenName $givenname $-path $ou -Description $description -Enabled $true -Accountpassword $password # -Enabled $enabled -mail $mail
+    $changePasswordAtLogon = if (-not $PromptForPasswords) { $true } else { $false }
+    New-ADUser -Name $name -GivenName $givenname -Path $ou -Description $description -Enabled $true -AccountPassword $password -ChangePasswordAtLogon $changePasswordAtLogon # -Enabled $enabled -mail $mail
     Write-Host "User $name created"
 
     # Add the groups to the user
